@@ -33,8 +33,39 @@ export default buildConfig({
       slug: 'media',
       fields: [],
       upload: {
-        staticDir: path.resolve(dirname, 'media'),
-      }
+        adminThumbnail: "thumbnail",
+        formatOptions: {
+          format: "webp",
+          options: { quality: 90 },
+        },
+        imageSizes: [
+          {
+            name: "thumbnail",
+            formatOptions: {
+              format: "webp",
+              options: { quality: 90 },
+            },
+            width: 200,
+          },
+          {
+            name: "medium",
+            formatOptions: {
+              format: "webp",
+              options: { quality: 90 },
+            },
+            width: 800,
+          },
+          {
+            name: "projectBlur",
+            formatOptions: {
+              format: "webp",
+              options: { quality: 30 },
+            },
+            width: 50,
+          },
+        ],
+        mimeTypes: ["image/jpeg", "image/png", "image/webp"],
+      },
     },
   ],
   db: sqliteAdapter({
@@ -50,7 +81,7 @@ export default buildConfig({
   plugins: [
     payloadFilesProxy({
       mediaCollectionSlug: "media",
-      mediaDirectory: path.resolve(dirname),
+      mediaDirectory: path.resolve("./dev"),
       originUrl: "https://example.es"
     }),
   ],

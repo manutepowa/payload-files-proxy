@@ -43,9 +43,9 @@ export const payloadFilesProxy =
     }
 
 
+    // @TODO: This path is not correct.
     // @ts-expect-error Because staticDir is boolean | OtherType
     const uploadDir = mediaCollection.upload?.staticDir || pluginOptions.mediaDirectory + '/' + pluginOptions.mediaCollectionSlug
-
 
     // Add hook to read collection
     mediaCollection.hooks = {
