@@ -15,6 +15,7 @@ export type PayloadFilesProxyConfig = {
    * Slug of media collection
    */
   mediaCollectionSlug?: string
+  mediaDirectory: string
   originUrl: string
 }
 
@@ -43,7 +44,8 @@ export const payloadFilesProxy =
 
 
     // @ts-expect-error Because staticDir is boolean | OtherType
-    const uploadDir = mediaCollection.upload?.staticDir || path.resolve(dirname, pluginOptions.mediaCollectionSlug)
+    const uploadDir = mediaCollection.upload?.staticDir || pluginOptions.mediaDirectory + '/' + pluginOptions.mediaCollectionSlug
+
 
     // Add hook to read collection
     mediaCollection.hooks = {

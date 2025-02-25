@@ -50,6 +50,7 @@ export default buildConfig({
   plugins: [
     payloadFilesProxy({
       mediaCollectionSlug: "media",
+      mediaDirectory: path.resolve(dirname),
       originUrl: "https://example.es"
     }),
   ],
