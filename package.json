@@ -1,6 +1,6 @@
 {
   "name": "payload-files-proxy",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Plugin to getting production files on a development server on demand.",
   "license": "MIT",
   "type": "module",

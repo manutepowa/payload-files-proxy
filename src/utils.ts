@@ -28,6 +28,10 @@ interface DownloadFileOptions {
   path: string
 }
 const downloadFile = async ({endpoint, originUrl, path}: DownloadFileOptions) => {
+  console.log({
+    endpoint,
+    originUrl,
+  })
   const response = await fetch(originUrl + endpoint) // Realiza la petición fetch
   // Guarda el archivo en la carpeta especificada
   await writeFile(path, Buffer.from(await response.arrayBuffer()))
