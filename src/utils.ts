@@ -8,11 +8,11 @@ export const checkIfFileExists = (uploadDir: string, originUrl: string) => {
 
     const files = prepareFiles(doc)
     for (const file of files){
+      if (!file.url) {continue}
       const path = `${uploadDir}/${file.filename}`
       try {
         await stat(path)
       } catch (error) {
-        console.log(doc)
         await downloadFile({ endpoint: file.url, originUrl, path })
       }
     }
@@ -29,10 +29,6 @@ interface DownloadFileOptions {
   path: string
 }
 const downloadFile = async ({endpoint, originUrl, path}: DownloadFileOptions) => {
-  console.log({
-    endpoint,
-    originUrl,
-  })
   const response = await fetch(originUrl + endpoint) // Realiza la petición fetch
   // Guarda el archivo en la carpeta especificada
   await writeFile(path, Buffer.from(await response.arrayBuffer()))

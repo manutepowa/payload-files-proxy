@@ -82,7 +82,7 @@ export default buildConfig({
   plugins: [
     payloadFilesProxy({
       mediaCollectionSlug: "media",
-      mediaDirectory: dirname,
+      mediaDirectory: path.resolve("./"),
       originUrl: "https://inet2you.itfumh.es"
     }),
   ],
