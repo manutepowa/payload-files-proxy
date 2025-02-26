@@ -13,6 +13,7 @@ import { testEmailAdapter } from './helpers/testEmailAdapter.js'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+
 if (!process.env.ROOT_DIR) {
   process.env.ROOT_DIR = dirname
 }
@@ -81,8 +82,8 @@ export default buildConfig({
   plugins: [
     payloadFilesProxy({
       mediaCollectionSlug: "media",
-      mediaDirectory: path.resolve("./dev"),
-      originUrl: "https://example.es"
+      mediaDirectory: dirname,
+      originUrl: "https://inet2you.itfumh.es"
     }),
   ],
   secret: process.env.PAYLOAD_SECRET || 'test-secret_key',

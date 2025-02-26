@@ -1,18 +1,18 @@
 import type { CollectionAfterReadHook } from "payload"
 
 import { stat, writeFile } from "fs/promises"
-import path from "path"
 
 export const checkIfFileExists = (uploadDir: string, originUrl: string) => {
   const checkFiles: CollectionAfterReadHook = async ({doc}) => {
     if (!doc.url) {return doc}
 
-    const files = await prepareFiles(doc)
+    const files = prepareFiles(doc)
     for (const file of files){
+      const path = `${uploadDir}/${file.filename}`
       try {
-        await stat(path.resolve(uploadDir, file.filename))
+        await stat(path)
       } catch (error) {
-        await downloadFile({ dir: uploadDir, endpoint: file.url, filename: file.filename, originUrl })
+        await downloadFile({ endpoint: file.url, originUrl, path })
       }
     }
 
@@ -23,18 +23,17 @@ export const checkIfFileExists = (uploadDir: string, originUrl: string) => {
 
 
 interface DownloadFileOptions {
-  dir: string
   endpoint: string
-  filename: string
   originUrl: string
+  path: string
 }
-const downloadFile = async ({dir, endpoint, filename, originUrl}: DownloadFileOptions) => {
+const downloadFile = async ({endpoint, originUrl, path}: DownloadFileOptions) => {
   const response = await fetch(originUrl + endpoint) // Realiza la petición fetch
   // Guarda el archivo en la carpeta especificada
-  await writeFile(dir + '/' + filename, Buffer.from(await response.arrayBuffer()))
+  await writeFile(path, Buffer.from(await response.arrayBuffer()))
 }
 
-const prepareFiles = async (doc: any) => {
+const prepareFiles = (doc: any) => {
   const files = [{
     filename: doc.filename,
     url: doc.url,
