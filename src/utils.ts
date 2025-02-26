@@ -12,6 +12,7 @@ export const checkIfFileExists = (uploadDir: string, originUrl: string) => {
       try {
         await stat(path)
       } catch (error) {
+        console.log(doc)
         await downloadFile({ endpoint: file.url, originUrl, path })
       }
     }
