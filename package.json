@@ -4,6 +4,14 @@
   "description": "Plugin to getting production files on a development server on demand.",
   "license": "MIT",
   "type": "module",
+  "keywords": [
+    "payload",
+    "cms",
+    "plugin",
+    "typescript",
+    "react",
+    "payload-plugin"
+  ],
   "exports": {
     ".": {
       "import": "./src/index.ts",
