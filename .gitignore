@@ -43,3 +43,6 @@ yarn-error.log*
 
 /dev/media
 /media
+.agents
+skills-lock.json
+odd
