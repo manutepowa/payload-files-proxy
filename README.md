@@ -4,6 +4,11 @@ Small Payload CMS plugin to fetch missing media files from an origin site during
 
 Use this when you do not want to sync a large uploads folder locally but still need media files to appear in pages and the admin UI.
 
+## Requirements and compatibility
+
+- Node.js `^22.23.4 || >=24.22.1` and Payload CMS `^3.92.0`.
+- The development application uses Payload 3.92.0, Next.js 15.4.11, and React / React DOM 19.1.2. Earlier Payload and Node versions are no longer supported by this package.
+
 ## Install
 
 ```bash
@@ -47,40 +52,28 @@ export default buildConfig({
 
 - `mediaCollectionSlug?: string`
   - Slug used to find the upload collection in `config.collections`.
-  - If omitted or not found, the plugin returns the original config and does nothing.
+  - If omitted, not found, or not an upload collection, no proxy handler is added.
 - `mediaDirectory: string` (required by type)
-  - Base fallback directory for file writes.
-  - If `collection.upload.staticDir` is truthy, that value is used instead.
-  - Otherwise fallback is `${mediaDirectory}/${mediaCollectionSlug}`.
+  - Retained for compatibility; it does not determine where files are written.
+  - Payload's runtime `upload.staticDir` is used, falling back to the collection slug.
 - `originUrl: string`
-  - Base URL used to fetch remote files as `originUrl + doc.url`.
+  - HTTP(S) origin used with the requested Payload file URL pathname. The origin's path, query, and fragment are ignored.
 - `disabled?: boolean`
   - If `true`, plugin is a no-op and config is returned unchanged.
 
 ## Runtime Behavior
 
-Based on the current source (`src/index.ts` and `src/utils.ts`):
+The plugin appends a file handler without replacing existing handlers. Payload checks read access before calling it. Document reads do not download files: on a file request, the handler checks the runtime local upload directory and fetches only a missing requested file. Payload then serves the local file, including its normal range handling. Image variants are fetched individually when requested.
 
-1. Plugin runs only when `disabled !== true`.
-2. It finds the target collection by `mediaCollectionSlug`.
-3. It computes `uploadDir` from `collection.upload.staticDir` or fallback `${mediaDirectory}/${mediaCollectionSlug}`.
-4. It sets `mediaCollection.hooks` to include an `afterRead` hook list composed of:
-   - previous `afterRead` hooks (if any)
-   - `checkIfFileExists(uploadDir, originUrl)`
-5. On each document read:
-   - if `doc.url` is missing, it returns immediately
-   - it prepares a file list from the main file plus `doc.sizes` variants (if present)
-   - for each item, it checks local existence using `fs.stat`
-   - if missing, it downloads using `fetch(originUrl + file.url)` and writes bytes with `fs.writeFile`
+Downloads are limited to 50 MiB and 15 seconds, require HTTP 200, and reject redirects. Completed downloads are published without overwriting an existing file; concurrent requests in the same process share a download. Failed downloads return HTTP 502 and are not cached.
 
 ## Important Limitations
 
-- The plugin is triggered by collection document reads, not by direct static file HTTP requests.
-- The destination directory must already exist; the code does not create directories.
-- Download currently does not validate `response.ok` before writing.
-- Remote fetch is anonymous (`fetch` only), so authenticated origins are not supported out of the box.
-- There is an in-code note (`@TODO`) indicating `uploadDir` resolution may be incorrect in some setups.
-- `mediaCollection.hooks` is reassigned and keeps previous `afterRead`, but other hook groups are not preserved.
+- Requests are anonymous; authenticated origins and redirects are not supported. The origin must serve the same Payload file pathname.
+- Configure only a trusted origin: the server makes outbound requests to it. Do not expose this development proxy in production. Downloaded content is trusted and is not scanned or validated as an image.
+- Payload's read access controls apply, but boolean public read access can permit requests for filenames without a matching database document. Restrict access and the origin accordingly.
+- Local storage must be enabled. The destination is created if necessary and must be writable; storage adapters or handlers that return a response before this handler take precedence.
+- Deduplication is process-local. Existing local files are never refreshed, and the 50 MiB limit is buffered in memory.
 
 ## Development vs Production
 
@@ -90,14 +83,32 @@ Based on the current source (`src/index.ts` and `src/utils.ts`):
 ## Troubleshooting
 
 - Files are not downloaded:
-  - confirm the document has `url` and `filename`
-  - confirm `mediaCollectionSlug` matches your collection slug
-  - confirm `originUrl + doc.url` is reachable
-  - confirm local upload directory exists and is writable
-- Variants are missing:
-  - confirm `doc.sizes[*].url` and `doc.sizes[*].filename` exist
-- 404/invalid files saved:
-  - check origin response status and body; current implementation writes whatever fetch returns
+  - confirm `mediaCollectionSlug` matches your upload collection and read access permits the request
+  - confirm the requested pathname is reachable on `originUrl` without redirects or authentication
+  - confirm Payload's local upload directory is writable and local storage is enabled
+  - check server logs for origin failures, the size limit, or timeout
+
+## Development and tests
+
+The `dev/` directory contains the Payload development application. Development requires pnpm 11 (the project pins pnpm 11.25.0). Dependency install scripts are allowed only for `sharp`. Integration tests use Vitest, an isolated temporary SQLite database, and a local HTTP origin; they do not need production services.
+
+```bash
+pnpm install
+DATABASE_URI=file:./dev/local.db PAYLOAD_CONFIG_PATH=./dev/payload.config.ts pnpm dev
+```
+
+Open http://localhost:3000/admin. The SQLite URI selects a local database; choose a different file if you want an isolated database. `PAYLOAD_CONFIG_PATH` points Next.js to the development Payload configuration. To regenerate the admin import map after changing components, run:
+
+```bash
+DATABASE_URI=file:./dev/local.db PAYLOAD_CONFIG_PATH=./dev/payload.config.ts pnpm dev:generate-importmap
+```
+
+The development configuration uses an external origin (`https://inet2you.itfumh.es`); missing files can only be fetched if that origin is reachable and serves the requested paths. Startup and tests do not require production services.
+
+```bash
+pnpm test
+pnpm test:watch
+```
 
 ## Contributing
 
